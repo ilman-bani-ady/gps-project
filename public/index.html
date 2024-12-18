@@ -29,9 +29,9 @@
                                 </select>
                             </div>
                         </li>
-                        <li>
+                        <!-- <li>
                             <button id="showAllRoutes">Tampilkan Semua Rute</button>
-                        </li>
+                        </li> -->
                     </ul>
                 </li>
                 <li>
@@ -58,9 +58,21 @@
         <!-- Page Content -->
         <div id="content">
             <nav class="navbar">
-                <button type="button" id="sidebarToggle" class="btn">
-                    <i class="fas fa-bars"></i>
-                </button>
+                <div class="navbar-left">
+                    <button type="button" id="sidebarToggle" class="btn">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h2 class="navbar-title">GPS Tracking System</h2>
+                </div>
+                <div class="navbar-right">
+                    <div class="navbar-info">
+                        <span class="date-time" id="currentDateTime"></span>
+                        <span class="user-info">
+                            <i class="fas fa-user"></i>
+                            Admin
+                        </span>
+                    </div>
+                </div>
             </nav>
 
             <div id="map"></div>
@@ -208,6 +220,25 @@
             // Sesuaikan tampilan peta
             map.fitBounds(route.getBounds());
         }
+
+        // Tambahkan script untuk menampilkan waktu
+        function updateDateTime() {
+            const now = new Date();
+            const options = { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            };
+            document.getElementById('currentDateTime').textContent = now.toLocaleDateString('id-ID', options);
+        }
+
+        // Update waktu setiap detik
+        updateDateTime();
+        setInterval(updateDateTime, 1000);
     </script>
 </body>
 </html> 

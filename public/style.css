@@ -87,9 +87,26 @@ body {
 }
 
 .navbar {
-    padding: 15px;
+    padding: 0 20px;
     background: #fff;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    height: 60px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.navbar-left {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.navbar-title {
+    margin: 0;
+    font-size: 1.5rem;
+    color: #2c3e50;
+    font-weight: 600;
 }
 
 #sidebarToggle {
@@ -97,6 +114,44 @@ body {
     border: none;
     font-size: 20px;
     cursor: pointer;
+    padding: 8px;
+    color: #2c3e50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.3s;
+}
+
+#sidebarToggle:hover {
+    transform: scale(1.1);
+}
+
+.navbar-right {
+    display: flex;
+    align-items: center;
+}
+
+.navbar-info {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.date-time {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #2c3e50;
+    font-weight: 500;
+}
+
+.user-info i {
+    font-size: 1.2rem;
 }
 
 #map {
@@ -131,6 +186,14 @@ body {
     
     .wrapper.toggled .sidebar {
         margin-left: 0;
+    }
+
+    .navbar-title {
+        font-size: 1.2rem;
+    }
+
+    .date-time {
+        display: none;
     }
 } 
 
