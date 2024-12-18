@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>GPS Route Map</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
+    <link rel="stylesheet" href="style.css" />
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+</head>
+<body>
+    <div class="wrapper toggled">
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h3>GPS Tracking</h3>
+            </div>
+
+            <ul class="list-unstyled components">
+                <li class="active">
+                    <a href="#routeSubmenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">
+                        <i class="fas fa-route"></i> 
+                        <span class="menu-text">Rute</span>
+                    </a>
+                    <ul class="collapse list-unstyled" id="routeSubmenu">
+                        <li>
+                            <div class="select-container">
+                                <select id="routeSelect" class="select2-route">
+                                    <option value="">Pilih Rute</option>
+                                </select>
+                            </div>
+                        </li>
+                        <li>
+                            <button id="showAllRoutes">Tampilkan Semua Rute</button>
+                        </li>
+                    </ul>
+                </li>
+                <li>
+                    <a href="#">
+                        <i class="fas fa-bus"></i> 
+                        <span class="menu-text">Monitoring Bus</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#">
+                        <i class="fas fa-chart-line"></i> 
+                        <span class="menu-text">Laporan</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#">
+                        <i class="fas fa-cog"></i> 
+                        <span class="menu-text">Pengaturan</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Page Content -->
+        <div id="content">
+            <nav class="navbar">
+                <button type="button" id="sidebarToggle" class="btn">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </nav>
+
+            <div id="map"></div>
+            <div id="legend"></div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script>
+        // Initialize map
+        const map = L.map('map').setView([-6.200000, 106.816666], 12);
+        let routeLayers = {};
+        let markers = [];
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        // Toggle Sidebar
+        document.getElementById('sidebarToggle').addEventListener('click', function() {
+            document.querySelector('.wrapper').classList.toggle('toggled');
+            
+            // Trigger resize event untuk menyesuaikan ukuran peta
+            setTimeout(function() {
+                map.invalidateSize();
+            }, 300);
+        });
+
+        // Auto-hide sidebar on mobile when clicking outside
+        document.addEventListener('click', function(event) {
+            const sidebar = document.getElementById('sidebar');
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            
+            if (window.innerWidth <= 768) {
+                if (!sidebar.contains(event.target) && !sidebarToggle.contains(event.target)) {
+                    document.querySelector('.wrapper').classList.add('toggled');
+                    setTimeout(function() {
+                        map.invalidateSize();
+                    }, 300);
+                }
+            }
+        });
+
+        // Toggle submenu
+        $('.dropdown-toggle').on('click', function () {
+            $(this).next('.collapse').toggleClass('show');
+        });
+
+        // Fetch data rute dari API
+        fetch('/api/routes')
+            .then(response => response.json())
+            .then(data => {
+                // Kelompokkan data berdasarkan rute_trip_id
+                const routes = data.reduce((acc, curr) => {
+                    if (!acc[curr.rute_trip_id]) {
+                        acc[curr.rute_trip_id] = [];
+                    }
+                    acc[curr.rute_trip_id].push(curr);
+                    return acc;
+                }, {});
+
+                // Populate dropdown
+                const select = document.getElementById('routeSelect');
+                Object.keys(routes).sort().forEach(ruteId => {
+                    const option = document.createElement('option');
+                    option.value = ruteId;
+                    option.textContent = ruteId;
+                    select.appendChild(option);
+                });
+
+                // Event listener untuk dropdown
+                select.addEventListener('change', (e) => {
+                    clearMap();
+                    const selectedRoute = e.target.value;
+                    if (selectedRoute) {
+                        const points = routes[selectedRoute];
+                        points.sort((a, b) => a.rute_sort - b.rute_sort);
+                        displayRoute(selectedRoute, points);
+                    }
+                });
+
+                // Event listener untuk tombol "Tampilkan Semua Rute"
+                document.getElementById('showAllRoutes').addEventListener('click', () => {
+                    clearMap();
+                    Object.entries(routes).forEach(([ruteId, points]) => {
+                        points.sort((a, b) => a.rute_sort - b.rute_sort);
+                        displayRoute(ruteId, points);
+                    });
+                });
+            })
+            .catch(error => console.error('Error:', error));
+
+        // Fungsi untuk membersihkan peta
+        function clearMap() {
+            Object.values(routeLayers).forEach(layer => map.removeLayer(layer));
+            markers.forEach(marker => map.removeLayer(marker));
+            markers = [];
+            document.getElementById('legend').innerHTML = '<h4>Rute Bus</h4>';
+        }
+
+        // Fungsi untuk menampilkan rute
+        function displayRoute(ruteId, points) {
+            const coordinates = points.map(point => [
+                parseFloat(point.latitude),
+                parseFloat(point.longitude)
+            ]);
+
+            // Tambahkan marker untuk setiap titik
+            points.forEach(point => {
+                const marker = L.marker([point.latitude, point.longitude])
+                    .addTo(map)
+                    .bindPopup(`
+                        <strong>${point.halte_name}</strong><br>
+                        Rute: ${ruteId}<br>
+                        Urutan: ${point.rute_sort}
+                    `);
+                markers.push(marker);
+            });
+
+            // Buat polyline untuk rute dengan warna tetap
+            const route = L.polyline(coordinates, {
+                color: '#FF0000',    // Warna merah untuk semua rute
+                weight: 3,           // Ketebalan garis
+                opacity: 0.8,        // Transparansi
+                smoothFactor: 1      // Kehalusan garis
+            }).addTo(map);
+
+            routeLayers[ruteId] = route;
+
+            // Hitung jarak rute menggunakan turf.js
+            const line = turf.lineString(coordinates.map(coord => [coord[1], coord[0]]));
+            const length = turf.length(line, {units: 'kilometers'});
+
+            // Update legend
+            document.getElementById('legend').innerHTML += `
+                <div>
+                    <span style="background-color: #FF0000"></span>
+                    ${ruteId} (${length.toFixed(2)} km)
+                </div>
+            `;
+
+            // Sesuaikan tampilan peta
+            map.fitBounds(route.getBounds());
+        }
+    </script>
+</body>
+</html> 
