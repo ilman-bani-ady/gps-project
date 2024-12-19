@@ -8,6 +8,20 @@
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 </head>
 <body>
+    <script>
+        // Cek authentication
+        function checkAuth() {
+            const user = localStorage.getItem('user');
+            if (!user) {
+                window.location.href = '/login.html';
+                return;
+            }
+        }
+        
+        // Jalankan cek auth saat halaman dimuat
+        checkAuth();
+    </script>
+
     <div class="wrapper toggled">
         <!-- Sidebar -->
         <div class="sidebar" id="sidebar">
@@ -67,10 +81,14 @@
                 <div class="navbar-right">
                     <div class="navbar-info">
                         <span class="date-time" id="currentDateTime"></span>
-                        <span class="user-info">
+                        <div class="user-info">
                             <i class="fas fa-user"></i>
-                            Admin
-                        </span>
+                            <span id="userName">Loading...</span>
+                        </div>
+                        <button id="logoutBtn" class="btn-logout">
+                            <i class="fas fa-sign-out-alt"></i>
+                            Logout
+                        </button>
                     </div>
                 </div>
             </nav>
@@ -239,6 +257,31 @@
         // Update waktu setiap detik
         updateDateTime();
         setInterval(updateDateTime, 1000);
+
+        // Update user info
+        function updateUserInfo() {
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (user) {
+                document.getElementById('userName').textContent = user.full_name || user.username;
+            }
+        }
+        updateUserInfo();
+
+        // Logout handler
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            try {
+                const response = await fetch('/api/logout', {
+                    method: 'POST'
+                });
+
+                if (response.ok) {
+                    localStorage.removeItem('user');
+                    window.location.href = '/login.html';
+                }
+            } catch (error) {
+                console.error('Logout error:', error);
+            }
+        });
     </script>
 </body>
 </html> 
