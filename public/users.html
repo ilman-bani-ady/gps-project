@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>User Management - GPS Tracking System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
+    <link rel="stylesheet" href="style.css" />
+    <style>
+        .content-wrapper {
+            padding: 20px;
+        }
+        
+        .user-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .user-table th, .user-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .user-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+        }
+
+        .btn-add {
+            background: #28a745;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+
+        .btn-edit, .btn-delete {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 5px;
+        }
+
+        .btn-edit {
+            background: #ffc107;
+            color: #000;
+        }
+
+        .btn-delete {
+            background: #dc3545;
+            color: white;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background: white;
+            width: 90%;
+            max-width: 500px;
+            margin: 50px auto;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h3>GPS Tracking</h3>
+            </div>
+
+            <ul class="list-unstyled components">
+                <li>
+                    <a href="/index.html">
+                        <i class="fas fa-map"></i> 
+                        <span class="menu-text">Peta</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="/users.html">
+                        <i class="fas fa-users"></i> 
+                        <span class="menu-text">User Management</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#routeSubmenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">
+                        <i class="fas fa-route"></i> 
+                        <span class="menu-text">Rute</span>
+                    </a>
+                    <ul class="collapse list-unstyled" id="routeSubmenu">
+                        <li>
+                            <select id="routeSelect">
+                                <option value="">Pilih Rute</option>
+                            </select>
+                        </li>
+                        <li>
+                            <button id="showAllRoutes">Tampilkan Semua Rute</button>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Content -->
+        <div id="content">
+            <nav class="navbar">
+                <div class="navbar-left">
+                    <button type="button" id="sidebarToggle" class="btn">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h2 class="navbar-title">Manajemen User</h2>
+                </div>
+                <div class="navbar-right">
+                    <div class="navbar-info">
+                        <span class="date-time" id="currentDateTime"></span>
+                        <div class="user-info">
+                            <i class="fas fa-user"></i>
+                            <span id="userName">Loading...</span>
+                        </div>
+                        <button id="logoutBtn" class="btn-logout">
+                            <i class="fas fa-sign-out-alt"></i>
+                            Logout
+                        </button>
+                    </div>
+                </div>
+            </nav>
+
+            <div class="content-wrapper">
+                <h2>User Management</h2>
+                <button class="btn-add" onclick="openModal()">
+                    <i class="fas fa-plus"></i> Tambah User
+                </button>
+
+                <table class="user-table">
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Nama Lengkap</th>
+                            <th>Role</th>
+                            <th>Last Login</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="userTableBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div id="userModal" class="modal">
+        <div class="modal-content">
+            <h3 id="modalTitle">Tambah User</h3>
+            <form id="userForm">
+                <input type="hidden" id="userId">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password">
+                </div>
+                <div class="form-group">
+                    <label for="fullName">Nama Lengkap</label>
+                    <input type="text" id="fullName" required>
+                </div>
+                <div class="form-group">
+                    <label for="role">Role</label>
+                    <select id="role" required>
+                        <option value="admin">Admin</option>
+                        <option value="user">User</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-add">Simpan</button>
+                <button type="button" onclick="closeModal()" style="background: #6c757d; color: white;">Batal</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let users = [];
+        
+        // Load users
+        function loadUsers() {
+            fetch('/api/users')
+                .then(response => response.json())
+                .then(data => {
+                    users = data;
+                    renderUsers();
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        // Render users table
+        function renderUsers() {
+            const tbody = document.getElementById('userTableBody');
+            tbody.innerHTML = '';
+            
+            users.forEach(user => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${user.username}</td>
+                    <td>${user.full_name}</td>
+                    <td>${user.role}</td>
+                    <td>${user.last_login ? new Date(user.last_login).toLocaleString() : '-'}</td>
+                    <td>
+                        <button class="btn-edit" onclick="editUser(${user.id})">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn-delete" onclick="deleteUser(${user.id})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Modal functions
+        function openModal(userId = null) {
+            const modal = document.getElementById('userModal');
+            const form = document.getElementById('userForm');
+            const modalTitle = document.getElementById('modalTitle');
+            
+            if (userId) {
+                const user = users.find(u => u.id === userId);
+                modalTitle.textContent = 'Edit User';
+                document.getElementById('userId').value = user.id;
+                document.getElementById('username').value = user.username;
+                document.getElementById('username').disabled = true;
+                document.getElementById('password').required = false;
+                document.getElementById('fullName').value = user.full_name;
+                document.getElementById('role').value = user.role;
+            } else {
+                modalTitle.textContent = 'Tambah User';
+                form.reset();
+                document.getElementById('userId').value = '';
+                document.getElementById('username').disabled = false;
+                document.getElementById('password').required = true;
+            }
+            
+            modal.style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('userModal').style.display = 'none';
+            document.getElementById('userForm').reset();
+        }
+
+        // Form submit handler
+        document.getElementById('userForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const userId = document.getElementById('userId').value;
+            const userData = {
+                username: document.getElementById('username').value,
+                password: document.getElementById('password').value,
+                full_name: document.getElementById('fullName').value,
+                role: document.getElementById('role').value
+            };
+
+            try {
+                let response;
+                if (userId) {
+                    // Update existing user
+                    if (!userData.password) delete userData.password;
+                    delete userData.username;
+                    response = await fetch(`/api/users/${userId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(userData)
+                    });
+                } else {
+                    // Create new user
+                    if (!userData.password) {
+                        alert('Password harus diisi untuk user baru!');
+                        return;
+                    }
+                    response = await fetch('/api/users', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(userData)
+                    });
+                }
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    closeModal();
+                    loadUsers();
+                    alert(userId ? 'User berhasil diupdate!' : 'User baru berhasil ditambahkan!');
+                } else {
+                    throw new Error(data.message || 'Terjadi kesalahan');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert(error.message || 'Terjadi kesalahan');
+            }
+        });
+
+        // Delete user
+        async function deleteUser(id) {
+            if (!confirm('Apakah Anda yakin ingin menghapus user ini?')) return;
+            
+            try {
+                const response = await fetch(`/api/users/${id}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    loadUsers();
+                    alert('User berhasil dihapus!');
+                } else {
+                    const data = await response.json();
+                    throw new Error(data.message || 'Terjadi kesalahan');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert(error.message || 'Terjadi kesalahan');
+            }
+        }
+
+        // Edit user
+        function editUser(id) {
+            openModal(id);
+        }
+
+        // Update datetime in navbar
+        function updateDateTime() {
+            const now = new Date();
+            const options = { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            };
+            document.getElementById('currentDateTime').textContent = 
+                now.toLocaleDateString('id-ID', options);
+        }
+
+        // Update user info in navbar
+        function updateUserInfo() {
+            try {
+                const userStr = localStorage.getItem('user');
+                if (!userStr) {
+                    console.log('No user data found');
+                    window.location.href = '/login.html';
+                    return;
+                }
+                
+                const user = JSON.parse(userStr);
+                if (user && user.full_name) {
+                    document.getElementById('userName').textContent = user.full_name;
+                } else if (user && user.username) {
+                    document.getElementById('userName').textContent = user.username;
+                } else {
+                    document.getElementById('userName').textContent = 'User';
+                }
+            } catch (error) {
+                console.error('Error parsing user data:', error);
+                localStorage.removeItem('user'); // Clear invalid data
+                window.location.href = '/login.html';
+            }
+        }
+
+        // Logout handler
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            try {
+                const response = await fetch('/api/logout', {
+                    method: 'POST'
+                });
+
+                if (response.ok) {
+                    localStorage.removeItem('user');
+                    window.location.href = '/login.html';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Terjadi kesalahan saat logout');
+            }
+        });
+
+        // Initialize
+        loadUsers();
+        updateUserInfo();
+        updateDateTime();
+        setInterval(updateDateTime, 1000);
+
+        // Sidebar toggle
+        document.getElementById('sidebarToggle').addEventListener('click', function() {
+            document.querySelector('.wrapper').classList.toggle('toggled');
+        });
+    </script>
+</body>
+</html>

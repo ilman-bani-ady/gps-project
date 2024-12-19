@@ -151,14 +151,12 @@
             const loading = document.querySelector('.loading');
             const loginButton = document.querySelector('.btn-login');
 
-            // Reset error message
             errorMessage.style.display = 'none';
-            
-            // Show loading
             loading.style.display = 'block';
             loginButton.disabled = true;
 
             try {
+                console.log('Attempting login for:', username);
                 const response = await fetch('/api/login', {
                     method: 'POST',
                     headers: {
@@ -168,17 +166,20 @@
                 });
 
                 const data = await response.json();
+                console.log('Login response:', data);
 
                 if (response.ok) {
-                    // Login successful
+                    console.log('Login successful, storing user data');
                     localStorage.setItem('user', JSON.stringify(data.user));
+                    console.log('Stored user data:', localStorage.getItem('user'));
                     window.location.href = '/index.html';
                 } else {
-                    // Show error message
+                    console.log('Login failed:', data.message);
                     errorMessage.textContent = data.message || 'Login gagal';
                     errorMessage.style.display = 'block';
                 }
             } catch (error) {
+                console.error('Login error:', error);
                 errorMessage.textContent = 'Terjadi kesalahan. Silakan coba lagi.';
                 errorMessage.style.display = 'block';
             } finally {
